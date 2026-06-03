@@ -16,6 +16,7 @@ class Todo {
 
   private async handleAddTodo(socket: Socket, data: any) {
     try {
+      console.log("Handle add to do controller");
       const { task, deadline, status } = data;
 
       await todoModel.create({

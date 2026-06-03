@@ -1,6 +1,6 @@
 export enum Status{
     Completed='completed',
-    Pending='Pending'
+    Pending='pending'
 }
 
 

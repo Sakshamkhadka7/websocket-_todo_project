@@ -8,11 +8,11 @@ import { Server } from "socket.io";
 // request -- socket
 // api -- event
 
-let io:Server | undefined;
+let io: Server | undefined;
 
 function startServer() {
   connectDb();
-  const PORT = envConfig.port || 4000;
+  const PORT = envConfig.port || 5000;
   const server = app.listen(PORT, () => {
     console.log(`Port is running on ${PORT} server `);
   });
@@ -20,15 +20,13 @@ function startServer() {
   io = new Server(server); // it attached websocket to HTTP request and allows client to upgrade individual connections from HTTP to Websocket
 }
 
-function getSocketIo(){
-     if(!io){
-        throw new Error("Socket io is not initialized")
-     }
+function getSocketIo() {
+  if (!io) {
+    throw new Error("Socket io is not initialized");
+  }
 
-     return io
-} 
-
-
+  return io;
+}
 
 startServer();
-export {getSocketIo}
+export { getSocketIo };
