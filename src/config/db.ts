@@ -4,7 +4,7 @@ import { envConfig } from "./config.js";
 const connectDb = async () => {
   try {
     mongoose.connection.on("connected", () => {
-      console.log("Datbase is conncected");
+      console.log("Datbase is connected");
     });
     await mongoose.connect(envConfig.mongo_url as string);
   } catch (error) {
