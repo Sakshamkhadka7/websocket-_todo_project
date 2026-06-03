@@ -8,7 +8,8 @@ class Todo {
     this.io.on("connection", (socket) => {
       console.log("New client is connected");
       socket.on("addToDo", (data) => this.handleAddTodo(socket, data));
-      socket.on("deleteTodo",(data)=> this.deleteTodo(socket,data))
+      socket.on("deleteTodo", (data) => this.deleteTodo(socket, data));
+      socket.on("updateTodo", (data) => this.updatedTodo(socket, data));
     });
   }
 
@@ -46,6 +47,38 @@ class Todo {
           message: "Todo not found",
         });
 
+        return;
+      }
+
+      const todos = await todoModel.find();
+      socket.emit("todos_updated", {
+        status: "success",
+        data: todos,
+      });
+    } catch (error) {
+      socket.emit("todo_response", {
+        status: "error",
+        error,
+      });
+    }
+  }
+
+  private async updatedTodo(
+    socket: Socket,
+    data: { id: string; status: string },
+  ) {
+    try {
+      const { id, status } = data;
+
+      const todo = await todoModel.findByIdAndUpdate(
+        id,
+        { status },
+      );
+      if (!todo) {
+        socket.emit("todo_response", {
+          status: "error",
+          message: "Todo not found",
+        });
         return;
       }
 
