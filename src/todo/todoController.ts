@@ -1,6 +1,7 @@
 import type { Socket } from "socket.io";
 import { getSocketIo } from "../../server.js";
 import todoModel from "./todoModel.js";
+import { Status } from "./todoType.js";
 
 class Todo {
   private io = getSocketIo();
@@ -23,7 +24,7 @@ class Todo {
         status,
       });
 
-      const todos = await todoModel.find();
+      const todos = await todoModel.find({status:Status.Pending});
       socket.emit("todos_updated", {
         status: "success",
         data: todos,
@@ -82,7 +83,7 @@ class Todo {
         return;
       }
 
-      const todos = await todoModel.find();
+      const todos = await todoModel.find({status:Status.Pending});
       socket.emit("todos_updated", {
         status: "success",
         data: todos,
