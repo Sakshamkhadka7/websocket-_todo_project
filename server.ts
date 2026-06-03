@@ -8,6 +8,8 @@ import { Server } from "socket.io";
 // request -- socket
 // api -- event
 
+let io:Server | undefined;
+
 function startServer() {
   connectDb();
   const PORT = envConfig.port || 4000;
@@ -15,24 +17,18 @@ function startServer() {
     console.log(`Port is running on ${PORT} server `);
   });
 
-  const io = new Server(server, {
-    cors: {
-      origin: "*",
-    },
-  }); // it attached websocket to HTTP request and allows client to upgrade individual connections from HTTP to Websocket
-
-  io.on("connection", (socket) => { // io is global connection which is listen by every event while socket is specific event  
-    console.log("CONNECTED");
-    console.log(socket.id)
-
-    socket.on("list", (data) => {
-      console.log("LIST EVENT RECEIVED");
-      console.log(data);
-      socket.emit("response",{
-        message:'Data is recieved',
-      })
-    });
-  });
+  io = new Server(server); // it attached websocket to HTTP request and allows client to upgrade individual connections from HTTP to Websocket
 }
 
+function getSocketIo(){
+     if(!io){
+        throw new Error("Socket io is not initialized")
+     }
+
+     return io
+} 
+
+
+
 startServer();
+export {getSocketIo}
