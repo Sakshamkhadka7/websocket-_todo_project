@@ -1,60 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Home Page</title>
-        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
-<body>
-   <div class="max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden mt-16">
-    <div class="px-4 py-2">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <div
+      class="max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden mt-16"
+    >
+      <div class="px-4 py-2">
         <h1 class="text-gray-800 font-bold text-2xl uppercase">To-Do List</h1>
-    </div>
-    <form class="w-full max-w-sm mx-auto px-4 py-2">
+      </div>
+      <form class="w-full max-w-sm mx-auto px-4 py-2" onsubmit="addtodo(event)">
         <div class="flex items-center border-b-2 border-teal-500 py-2">
-            <input
-                class="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none"
-                type="text" placeholder="Add a task">
-            <button
-                class="flex-shrink-0 bg-teal-500 hover:bg-teal-700 border-teal-500 hover:border-teal-700 text-sm border-4 text-white py-1 px-2 rounded"
-                type="button">
-                Add
-            </button>
+          <input
+            id="newTask"
+            class="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none"
+            type="text"
+            placeholder="Add a task"
+          />
+          <button
+            class="flex-shrink-0 bg-teal-500 hover:bg-teal-700 border-teal-500 hover:border-teal-700 text-sm border-4 text-white py-1 px-2 rounded"
+            type="submit"
+          >
+            Add
+          </button>
         </div>
-    </form>
-    <ul class="divide-y divide-gray-200 px-4">
-        <li class="py-4">
-            <div class="flex items-center">
-                <input id="todo1" name="todo1" type="checkbox"
-                    class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
-                <label for="todo1" class="ml-3 block text-gray-900">
-                    <span class="text-lg font-medium">Finish project proposal</span>
-                    <span class="text-sm font-light text-gray-500">Due on 4/1/23</span>
-                </label>
-            </div>
-        </li>
-        <li class="py-4">
-            <div class="flex items-center">
-                <input id="todo2" name="todo2" type="checkbox"
-                    class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
-                <label for="todo2" class="ml-3 block text-gray-900">
-                    <span class="text-lg font-medium">Buy groceries</span>
-                    <span class="text-sm font-light text-gray-500">Bananas, milk, bread</span>
-                </label>
-            </div>
-        </li>
-        <li class="py-4">
-            <div class="flex items-center">
-                <input id="todo3" name="todo3" type="checkbox"
-                    class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
-                <label for="todo3" class="ml-3 block text-gray-900">
-                    <span class="text-lg font-medium">Go for a run</span>
-                    <span class="text-sm font-light text-gray-500">3 miles</span>
-                </label>
-            </div>
-        </li>
-    </ul>
-</div>
-</body>
+      </form>
+      <ul id="todolist" class="divide-y divide-gray-200 px-4"></ul>
+    </div>
+    <script>
+      const socket = io();
+      socket.on("connect", () => {
+        console.log("Connected to server");
+        socket.emit("getTodo");
+      });
+
+      socket.on("todos_updated", (data) => {
+        console.log("Received:", data);
+
+        if (data.status === "success") {
+          updateTodoList(data.data);
+        } else {
+          console.log("Error occurred at todos_updated");
+        }
+      });
+
+      function updateTodoList(todos) {
+        const todoList = document.getElementById("todolist");
+
+        // Clear existing list
+        todoList.innerHTML = "";
+
+        todos.forEach((todo) => {
+          const listItem = `
+      <li class="py-4">
+        <div class="flex justify-between items-center">
+          <input onChange=(toggleStatus('${todo._id}')) id="todo${todo._id}" name="todo${todo._id}" type="checkbox" class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded" />
+          <div>
+            <span class="text-lg font-medium block">
+              ${todo.task}
+            </span>
+
+            <span class="text-sm font-light text-gray-500">
+              Due on ${todo.deadline}
+            </span>
+          </div>
+
+          <button
+            onclick="deleteTodo('${todo._id}')"
+            class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded"
+          >
+            Delete
+          </button>
+
+        </div>
+      </li>
+    `;
+
+          todoList.innerHTML += listItem;
+        });
+      }
+
+  function toggleStatus (id){
+  socket.emit("updateTodo",{
+   id:id,
+   status:"completed"
+  })
+
+  }
+
+      function deleteTodo(todoId) {
+        console.log("Deleting Todo:", todoId);
+
+        socket.emit("deleteTodo", {
+          id: todoId,
+        });
+      }
+
+      function addtodo(event) {
+        event.preventDefault();
+
+        const taskValue = document.getElementById("newTask");
+        const task = taskValue.value.trim();
+
+        if (!task) {
+          alert("Please enter a task");
+          return;
+        }
+
+        socket.emit("addToDo", {
+          task: task,
+          deadline: new Date().toLocaleDateString(),
+          status: "pending",
+        });
+
+        taskValue.value = "";
+      }
+    </script>
+  </body>
 </html>
